@@ -1,0 +1,118 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    html, body, canvas {
+      user-select: none;
+      touch-action: none;
+      margin: 0;
+      padding:0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const map = ["s", "d", "f", "g", "h", "j", "k", "l"];
+    const socket = new WebSocket(`ws://${window.location.host}`);    
+    socket.addEventListener("open", (event) => {
+      const ongoingTouches = [];
+      const canvas = document.querySelector("canvas");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const ctx = canvas.getContext("2d", {
+        alpha: false,
+        desynchronized: true
+      });
+      
+      let cache = "[]";
+      const step = () => {
+        const downKeyList = new Set();
+        const x = 0;
+        const y = 0;
+        const w = window.innerWidth;
+        const h = window.innerHeight / 2;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "black";
+        ctx.fillStyle = "#0F9";
+        for (const touch of ongoingTouches) {
+          const {pageX, pageY} = touch;
+          if (pageX >= x && pageX < x + w && pageY >= y && pageY < y + h) {
+            ctx.fillStyle = "#FFF";
+            downKeyList.add("space");
+          }
+        };
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x, y, w, h);
+        const numOfKeys = 8;
+        for (let i = 0; i < numOfKeys; i++) {
+          const x = i / numOfKeys * window.innerWidth;
+          const y = window.innerHeight / 2;
+          const w = window.innerWidth / numOfKeys;
+          const h = window.innerHeight / 2;
+          ctx.fillStyle = "#0F9";
+          for (const touch of ongoingTouches) {
+            const {pageX, pageY} = touch;
+            if (pageX >= x && pageX < x + w && pageY >= y && pageY < y + h) {
+              ctx.fillStyle = "#FFF";
+              downKeyList.add(map[i]);
+            }
+          };
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeRect(x, y, w, h);
+        }
+        const message = JSON.stringify(Array.from(downKeyList));
+        if (message !== cache) {
+          socket.send(message);
+          cache = message;
+        }
+        window.requestAnimationFrame(step);
+      }
+      window.requestAnimationFrame(step);
+      
+      const copyTouch = ({ identifier, pageX, pageY }) => ({ identifier, pageX, pageY });
+      const ongoingTouchIndexById = (idToFind) => {
+        for (let i = 0; i < ongoingTouches.length; i++) {
+          if (ongoingTouches[i].identifier == idToFind) {
+            return i;
+          }
+        }
+        return -1;
+      }
+      canvas.addEventListener("touchstart", (evt) => {
+        evt.preventDefault();
+        const touches = evt.changedTouches;
+        for (let i = 0; i < touches.length; i++) {
+          ongoingTouches.push(copyTouch(touches[i]));
+        }
+      }, false);
+      canvas.addEventListener("touchend", (evt) => {
+        evt.preventDefault();
+        const touches = evt.changedTouches;
+        for (let i = 0; i < touches.length; i++) {
+          const idx = ongoingTouchIndexById(touches[i].identifier);
+          if (idx >= 0) {
+            ongoingTouches.splice(idx, 1);
+          }
+        }
+      }, false);
+      canvas.addEventListener("touchmove", (evt) => {
+        evt.preventDefault();
+        const touches = evt.changedTouches;
+        for (let i = 0; i < touches.length; i++) {
+          if (ongoingTouchIndexById(touches[i].identifier) >= 0) {
+            ongoingTouches.splice(ongoingTouchIndexById(touches[i].identifier), 1, copyTouch(touches[i]));
+          }
+        }
+      }, false);
+    });
+    
+    window.oncontextmenu = (e) => {
+      e.preventDefault();
+    }
+  </script>
+</body>
+</html>

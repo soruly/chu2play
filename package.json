@@ -1,0 +1,27 @@
+{
+  "name": "chu2play",
+  "version": "1.0.0",
+  "description": "Remote Control for chunithm",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soruly/chu2play.git"
+  },
+  "keywords": [
+    "chunithm"
+  ],
+  "author": "soruly",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/soruly/chu2play/issues"
+  },
+  "homepage": "https://github.com/soruly/chu2play#readme",
+  "dependencies": {
+    "koa": "^2.11.0",
+    "koa-websocket": "^6.0.0",
+    "robotjs": "git+https://github.com/octalmage/robotjs.git#master"
+  }
+}
